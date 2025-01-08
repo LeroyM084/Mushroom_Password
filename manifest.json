@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "MushroomPassword",
+  "version": "0.1",
+  "description": "A simple password manager and generator.",
+  "browser_action":{
+    "default_popup": "ChromeExtension/index.html",
+    "default_icons" : {
+      "16" : "../assets/icons/icon16.webp",
+      "32" : "../assets/icons/icon32.webp",
+      "128": "../assets/icons/icon128.webp"
+    }
+  },
+  "background" : {
+    "scripts" : ["ChromeExtension/background.js"],
+    "persistent" : false
+  },
+  "permission" : ["activeTab"]
+}
