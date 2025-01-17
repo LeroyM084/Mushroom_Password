@@ -1,56 +1,80 @@
+/* Global Styles */
 body {
-    justify-content: center;
-    align-content: center;
     background-color: blanchedalmond;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     width: 400px;
     height: 150px;
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombre douce pour plus de profondeur */
-    padding: 10px; /* Espace interne */
-    font-family: 'Arial', sans-serif; /* Police propre et moderne */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombre douce */
+    padding: 10px;
 }
 
 title {
-    font-size: 20px; /* Taille ajustée pour le titre */
-    font-weight: bold; /* Texte en gras */
-    color: #333; /* Couleur sombre pour s'harmoniser avec #result */
-    text-align: center; /* Centrage du texte */
-    margin-bottom: 10px; /* Espacement en bas */
-    display: block; /* S'assure que le titre s'affiche sur sa propre ligne */
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+    margin-bottom: 10px;
+    display: block;
 }
 
+/* Main Container */
 main {
     display: flex;
-    flex-direction: row;
     align-items: center;
     justify-content: center;
+    flex-direction: row;
 }
 
-#copy {
-    background-color: blanchedalmond;
-    color: white;
-    padding: 5px 10px; /* Dimensions réduites pour rendre le bouton plus petit */
-    border: none;
-    border-radius: 5px;
-    font-size: 14px; /* Taille de texte plus petite */
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-left: 10px; /* Espace entre le bouton et le texte */
-}
-
-#copy:hover {
-    background-color: #a69983; /* Couleur survol avec transparence */
-}
-
-img {
-    width: 30px; /* Taille réduite pour l'image dans le bouton */
-    height: 30px; /* Garder l'aspect carré */
-    margin-right: 5px; /* Espacement réduit entre l'image et le texte */
-}
-
+/* Result Text */
 #result {
     font-size: 18px;
     font-weight: bold;
     color: #333;
-    margin-right: 10px; /* Espacement entre #result et le bouton */
+    margin-right: 10px;
+}
+
+/* Copy Button */
+#copy {
+    background-color: blanchedalmond;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-left: 10px;
+}
+
+#copy:hover {
+    background-color: #a69983; /* Couleur au survol */
+}
+
+#copy img {
+    width: 30px;
+    height: 30px;
+    margin-right: 5px; /* Espacement entre l'image et le texte */
+}
+
+/* Save Button */
+#save {
+    margin-top: 10px;
+    background-color: #aa4b4b;
+    color: white;
+    height: 40px; /* Hauteur ajustée pour plus d'espace */
+    width: 90%;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    text-align: center; /* Alignement du texte au centre */
+    cursor: pointer;
+}
+
+#save:hover {
+    background-color: #9a4343; /* Couleur au survol */
 }
