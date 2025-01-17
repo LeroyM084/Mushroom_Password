@@ -92,7 +92,7 @@ def api_save_password():
 
     # Enregistrer le mot de passe chiffré
     encrypted_password = encrypt_password(password, key)
-    passwords[service] = encrypted_password.decode()
+    passwords[service] = encrypted_password.decode()  # Convertir les bytes en chaîne
 
     with open(PASSWORDS_FILE, 'w') as file:
         json.dump(passwords, file)
@@ -102,14 +102,23 @@ def api_save_password():
 
 @app.route('/list-passwords', methods=['GET'])
 def api_list_passwords():
-    """Endpoint pour lister tous les services enregistrés."""
+    """Endpoint pour lister tous les services et mots de passe enregistrés, décryptés."""
     ensure_json_file(PASSWORDS_FILE)
 
+    # Lire la clé de décryptage depuis key.txt
+    decryption_key = load_key()
+
+    # Ouvrir et lire le fichier des mots de passe
     with open(PASSWORDS_FILE, 'r') as file:
         passwords = json.load(file)
 
-    services = list(passwords.keys())
-    return jsonify({"services": services})
+    # Décrypter chaque mot de passe
+    for service, encrypted_password in passwords.items():
+        encrypted_password_bytes = encrypted_password.encode()  # Convertir en bytes
+        decrypted_password = decrypt_password(encrypted_password_bytes, decryption_key)
+        passwords[service] = decrypted_password
+
+    return jsonify(passwords)
 
 
 @app.route('/get-password', methods=['POST'])
@@ -128,7 +137,7 @@ def api_get_password():
         passwords = json.load(file)
 
     if service in passwords:
-        encrypted_password = passwords[service].encode()
+        encrypted_password = passwords[service].encode()  # Convertir en bytes
         password = decrypt_password(encrypted_password, key)
         return jsonify({"service": service, "password": password})
     else:

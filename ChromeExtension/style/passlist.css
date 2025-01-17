@@ -1,0 +1,61 @@
+/* Corps de la page */
+body {
+    font-family: Arial, sans-serif;
+    color: #333;
+    width: 300px;
+    background-color: blanchedalmond;
+    height: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Liste des services */
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.service-item {
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.service-name {
+    font-weight: bold;
+    color: #ff4742;
+    font-size: 16px;
+    flex: 1;
+}
+
+.copy-button {
+    background-color: blanchedalmond;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.copy-button:hover {
+    background-color: #a69983;
+}
+
+.copy-button img {
+    width: 30px;
+    height: 30px;
+}
+
+#result {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-right: 10px;
+}

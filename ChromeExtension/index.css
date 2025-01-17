@@ -41,6 +41,7 @@ main {
 }
 
 button {
+    width: 275px;
     display: inline-block;
     outline: 0;
     cursor: pointer;

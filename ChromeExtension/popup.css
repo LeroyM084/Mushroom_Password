@@ -1,0 +1,56 @@
+body {
+    justify-content: center;
+    align-content: center;
+    background-color: blanchedalmond;
+    width: 400px;
+    height: 150px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombre douce pour plus de profondeur */
+    padding: 10px; /* Espace interne */
+    font-family: 'Arial', sans-serif; /* Police propre et moderne */
+}
+
+title {
+    font-size: 20px; /* Taille ajustée pour le titre */
+    font-weight: bold; /* Texte en gras */
+    color: #333; /* Couleur sombre pour s'harmoniser avec #result */
+    text-align: center; /* Centrage du texte */
+    margin-bottom: 10px; /* Espacement en bas */
+    display: block; /* S'assure que le titre s'affiche sur sa propre ligne */
+}
+
+main {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+#copy {
+    background-color: blanchedalmond;
+    color: white;
+    padding: 5px 10px; /* Dimensions réduites pour rendre le bouton plus petit */
+    border: none;
+    border-radius: 5px;
+    font-size: 14px; /* Taille de texte plus petite */
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-left: 10px; /* Espace entre le bouton et le texte */
+}
+
+#copy:hover {
+    background-color: #a69983; /* Couleur survol avec transparence */
+}
+
+img {
+    width: 30px; /* Taille réduite pour l'image dans le bouton */
+    height: 30px; /* Garder l'aspect carré */
+    margin-right: 5px; /* Espacement réduit entre l'image et le texte */
+}
+
+#result {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-right: 10px; /* Espacement entre #result et le bouton */
+}

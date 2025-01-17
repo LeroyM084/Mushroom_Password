@@ -1,5 +1,8 @@
    // script.js
 
+
+
+   // Fonction pour afficher la liste de tous les mots de passes.
    document.getElementById("listPasswords").addEventListener("click", () => {
        fetch("http://localhost:5000/list-passwords")
            .then(response => response.json())
@@ -11,24 +14,25 @@
            });
    });
 
-   document.getElementById("generatePassword").addEventListener("click", () => {
-    const length = 25; // Définir une longueur ou demander une entrée utilisateur
-    fetch(`http://localhost:5000/generate-password?length=${length}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error("Erreur lors de l'appel à l'API");
-            }
-            return response.json(); // Convertit la réponse en JSON
-        })
-        .then(data => {
-            console.log("Password généré : ", data); // Vérification dans la console
-            document.getElementById("result").innerHTML = `Mot de passe généré : ${data.password}`;
-        })
-        .catch(error => {
-            console.error("Erreur :", error);
-            document.getElementById("result").innerHTML = "Erreur lors de la génération du mot de passe.";
-        });
-});
+
+
+
+
+
+/*
+Essayer de le faire avecSweetAlert2
+*/
+function displayTextOnScreen(data) {
+    data.then(result => {
+        alert(`Mot de passe généré : ${result.password}`);
+    }).catch(error => {
+        console.error("Erreur :", error);
+        alert("Erreur lors de l'affichage du mot de passe.");
+    });
+}
+
+
+
 
 
   /**

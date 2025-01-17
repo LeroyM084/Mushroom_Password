@@ -5,17 +5,19 @@
     <title>Mushroom Password</title>
     <link rel="stylesheet" href="index.css">
     <script src="script.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 </head>
 <body>
     <header>
-        <logo><img src="../assets/icons/icon32.webp"></logo>
+        <logo><img src="assets/icons/icon32.webp"></logo>
         <h1>Mushroom Password</h1>
     </header>
     <main>
         <ul>
             <a href = "templates/passwordlist.html"><button id="listPasswords">Liste des mots de passe</button></a>
-           <button id="generatePassword">Générer un mot de passe</button>
+            <a href = "templates/resultPopUp.html"><button id="generatePassword">Générer un mot de passe</button></a>
            <button id="getPassword">Récupérer un mot de passe</button>
             <div id="result"></div>
         </ul>
