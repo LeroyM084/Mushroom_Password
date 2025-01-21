@@ -5,7 +5,8 @@
   "description": "A simple password manager and generator.",
   "permissions": [
     "activeTab",
-    "tabs"
+    "tabs",
+    "http/localhost:5000/"
   ],
   "background": {
     "service_worker": "ChromeExtension/background.js"
@@ -13,14 +14,14 @@
   "action": {
     "default_popup": "ChromeExtension/index.html",
     "default_icon": {
-      "16": "ChromeExtension/assets/icons/icon16.webp",
-      "32": "ChromeExtension/assets/icons/icon32.webp",
-      "128": "ChromeExtension/assets/icons/icon128.webp"
+      "16": "ChromeExtension/assets/icons/icon16.png",
+      "32": "ChromeExtension/assets/icons/icon32.png",
+      "128": "ChromeExtension/assets/icons/icon128.png"
     }
   },
   "icons": {
-    "16": "ChromeExtension/assets/icons/icon16.webp",
-    "32": "ChromeExtension/assets/icons/icon32.webp",
-    "128": "ChromeExtension/assets/icons/icon128.webp"
+    "16": "ChromeExtension/assets/icons/icon16.png",
+    "32": "ChromeExtension/assets/icons/icon32.png",
+    "128": "ChromeExtension/assets/icons/icon128.png"
   }
 }

@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Chemins vers les fichiers
-PASSWORDS_FILE = 'passwords.json'
+PASSWORDS_FILE = '.\API\passwords.json'
 KEY_FILE = 'key_file.key'
 
 
@@ -58,6 +58,19 @@ def decrypt_password(encrypted_password, key):
     """Décrypte un mot de passe avec une clé."""
     return key.decrypt(encrypted_password).decode()
 
+# Fonction pour avoir le service à partir de l'URL.
+def extract_domain_name(url):
+    # Supprimer http:// ou https://
+    url = url.replace('http://', '').replace('https://', '')
+    
+    # Supprimer www.
+    url = url.replace('www.', '')
+    
+    # Couper à partir du premier point
+    domain = url.split('.')[0]
+    
+    return domain
+
 
 # --- Création des routes Flask ---
 @app.route('/')
@@ -76,6 +89,8 @@ def api_generate_password():
 @app.route('/save-password', methods=['POST'])
 def api_save_password():
     """Endpoint pour enregistrer un mot de passe."""
+    print("requete ok")
+    print("donnee", request.json)
     data = request.json
     service = data.get('service')
     password = data.get('password')
@@ -89,6 +104,9 @@ def api_save_password():
     # Charger les mots de passe existants
     with open(PASSWORDS_FILE, 'r') as file:
         passwords = json.load(file)
+
+    # Modifier le nom de service pour le trim
+    service = extract_domain_name(service)
 
     # Enregistrer le mot de passe chiffré
     encrypted_password = encrypt_password(password, key)
@@ -120,7 +138,6 @@ def api_list_passwords():
 
     return jsonify(passwords)
 
-
 @app.route('/get-password', methods=['POST'])
 def api_get_password():
     """Endpoint pour récupérer un mot de passe pour un service donné."""
@@ -149,3 +166,37 @@ if __name__ == '__main__':
     if not os.path.exists(KEY_FILE):
         gen_key()  # Génération de la clé si elle n'existe pas
     app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+def save_password(service, password):
+    """Endpoint pour enregistrer un mot de passe."""
+    # data = request.json
+    # service = data.get('service')
+    # password = data.get('password')
+
+    if not service or not password:
+        return "Les champs 'service' et 'password' sont requis."
+
+    ensure_json_file(PASSWORDS_FILE)
+    key = load_key()
+
+    # Charger les mots de passe existants
+    with open(PASSWORDS_FILE, 'r') as file:
+        passwords = json.load(file)
+
+    # Enregistrer le mot de passe chiffré
+    encrypted_password = encrypt_password(password, key)
+    passwords[service] = encrypted_password.decode()  # Convertir les bytes en chaîne
+
+    with open(PASSWORDS_FILE, 'w') as file:
+        json.dump(passwords, file)
+
+    return "OK mot de passe enregsitré correment."

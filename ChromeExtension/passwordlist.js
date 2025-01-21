@@ -1,92 +1,79 @@
-// URL de l'API pour récupérer la liste des mots de passe
+// Configuration
 const API_URL = 'http://localhost:5000/list-passwords';
+const ICONS = {
+    copy: "/ChromeExtension/assets/imgs/copy_icon.png",
+    tick: "/ChromeExtension/assets/imgs/tick_icon.png"
+};
 
-// Fonction pour récupérer les services et mots de passe depuis le JSON
-async function recupererServicesEtMotsDePasse() {
+// Récupérer les services et mots de passe
+async function fetchPasswords() {
     try {
-        // Récupérer les données via l'API
         const response = await fetch(API_URL);
-        if (!response.ok) {
-            throw new Error(`Erreur lors de la récupération des données : ${response.statusText}`);
-        }
-
-        const motsDePasse = await response.json();
-
-        // Vérifier si le JSON est vide
-        if (!motsDePasse || Object.keys(motsDePasse).length === 0) {
-            throw new Error('Aucun mot de passe enregistré.');
-        }
-
-        // Extraire les services et les mots de passe
-        const services = Object.keys(motsDePasse);
-        const passwords = Object.values(motsDePasse);
-
-        // Vérifier que les deux listes ont la même longueur
-        if (services.length !== passwords.length) {
-            throw new Error('Incohérence dans les données : nombre de services et mots de passe différent.');
-        }
-
-        return { services, passwords };
+        if (!response.ok) throw new Error('Erreur de récupération');
+        
+        const passwords = await response.json();
+        return passwords;
     } catch (error) {
         console.error('Erreur:', error);
-        return { services: [], passwords: [] };
+        return {};
     }
 }
 
-// Charger les données lorsque la page est prête
+// Copier un mot de passe
+function copyPassword(password, button) {
+    navigator.clipboard.writeText(password)
+        .then(() => {
+            button.innerHTML = `<img src="${ICONS.tick}" alt="Copié">`;
+            setTimeout(() => {
+                button.innerHTML = `<img src="${ICONS.copy}" alt="Copier">`;
+            }, 2000);
+        })
+        .catch(err => console.error('Erreur de copie:', err));
+}
+
+// Afficher les mots de passe
+function displayPasswords(passwords) {
+    const passwordList = document.getElementById('password-list');
+    passwordList.innerHTML = ''; // Vider la liste
+
+    Object.entries(passwords).forEach(([service, password]) => {
+        const listItem = document.createElement('li');
+        listItem.classList.add('service-item');
+
+        const serviceSpan = document.createElement('span');
+        serviceSpan.textContent = service;
+        serviceSpan.classList.add('service-name');
+
+        const copyButton = document.createElement('button');
+        copyButton.innerHTML = `<img src="${ICONS.copy}" alt="Copier">`;
+        copyButton.addEventListener('click', () => copyPassword(password, copyButton));
+
+        listItem.appendChild(serviceSpan);
+        listItem.appendChild(copyButton);
+        passwordList.appendChild(listItem);
+    });
+}
+
+// Rechercher des mots de passe
+function searchPasswords() {
+    const searchInput = document.getElementById('search-input').value.toLowerCase();
+    const passwordItems = document.querySelectorAll('.service-item');
+
+    passwordItems.forEach(item => {
+        const serviceName = item.querySelector('.service-name').textContent.toLowerCase();
+        item.style.display = serviceName.includes(searchInput) ? 'flex' : 'none';
+    });
+}
+
+// Initialisation
 document.addEventListener('DOMContentLoaded', async () => {
-    const resultDiv = document.getElementById('password-list');
-    const copyIconPath = "/ChromeExtension/assets/imgs/copy_icon.png";
-    const tickIconPath = "/ChromeExtension/assets/imgs/tick_icon.png";
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('input', searchPasswords);
 
-    const result = await recupererServicesEtMotsDePasse();
-    if (result) {
-        const { services, passwords } = result;
-
-        // Sélectionner l'élément de la liste
-        const passwordList = document.getElementById('password-list');
-
-        // Créer un élément de liste pour chaque service et mot de passe
-        services.forEach((service, index) => {
-            const listItem = document.createElement('li');
-            listItem.classList.add('service-item');
-
-            // Créer un bouton pour copier le mot de passe dans le presse-papier
-            const button = document.createElement('button');
-            button.classList.add('copy-button');
-            button.innerHTML = `<img src="${copyIconPath}" alt="Copier" title="Copier le mot de passe">`;
-            button.addEventListener('click', () => {
-                const password = passwords[index];
-
-                // Copier le mot de passe dans le presse-papier
-                navigator.clipboard.writeText(password)
-                    .then(() => {
-                        // Changer l'icône après la copie
-                        button.innerHTML = `<img src="${tickIconPath}" alt="Copié" title="Mot de passe copié">`;
-
-                        // Revenir à l'icône de copie après 2 secondes
-                        setTimeout(() => {
-                            button.innerHTML = `<img src="${copyIconPath}" alt="Copier" title="Copier le mot de passe">`;
-                        }, 2000);
-                    })
-                    .catch(err => {
-                        console.error('Erreur lors de la copie : ', err);
-                    });
-            });
-
-            // Créer un élément de texte pour afficher le service
-            const serviceName = document.createElement('span');
-            serviceName.classList.add('service-name');
-            serviceName.textContent = service;
-
-            // Ajouter le service et le bouton à l'élément de la liste
-            listItem.appendChild(serviceName);
-            listItem.appendChild(button);
-
-            // Ajouter l'élément de la liste au DOM
-            passwordList.appendChild(listItem);
-        });
-    } else {
-        console.log('Aucune donnée disponible.');
+    try {
+        const passwords = await fetchPasswords();
+        displayPasswords(passwords);
+    } catch (error) {
+        console.error('Erreur lors du chargement:', error);
     }
 });

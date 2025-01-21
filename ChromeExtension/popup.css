@@ -78,3 +78,8 @@ main {
 #save:hover {
     background-color: #9a4343; /* Couleur au survol */
 }
+
+img{
+    height: 20px;
+    width: 20px;
+}
