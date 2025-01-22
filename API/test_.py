@@ -1,4 +1,4 @@
-from flask_password_manager import *
+from API.mushroom_API import *
 
 gen_key()
 service = "GITHUB"
