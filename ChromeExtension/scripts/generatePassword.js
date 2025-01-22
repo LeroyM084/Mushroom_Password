@@ -1,7 +1,7 @@
 let generatedPassword = ''; // Variable globale pour stocker le mot de passe généré
 
 // Fonction asynchrone pour générer le mot de passe
-async function generatePassword() {
+export async function generatePassword() {
 const length = 25; // Longueur du mot de passe
 try {
 const response = await fetch(`http://localhost:5000/generate-password?length=${length}`);
