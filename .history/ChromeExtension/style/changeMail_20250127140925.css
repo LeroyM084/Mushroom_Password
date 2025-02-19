@@ -1,0 +1,59 @@
+/* Global Styles */
+body {
+    background-color: blanchedalmond;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Ajuste pour centrer verticalement */
+    margin: 0;
+}
+
+.container {
+    background-color: white;
+    width: 400px;
+    height: 150px; /* Respecte la hauteur fixée */
+    padding: 10px; /* Réduit le padding pour respecter les dimensions */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombre douce */
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Espacement optimal des éléments */
+}
+
+h1 {
+    font-size: 18px; /* Réduit la taille pour correspondre aux dimensions */
+    font-weight: bold;
+    color: #333;
+    margin: 0; /* Supprime l'espacement par défaut */
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+input[type="email"] {
+    width: calc(100% - 20px); /* Ajuste pour tenir compte du padding */
+    padding: 5px; /* Réduit le padding pour tenir dans la hauteur */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px; /* Ajuste la taille pour l'espace */
+}
+
+button {
+    background-color: #aa4b4b;
+    color: white;
+    padding: 5px 10px; /* Réduit la taille du bouton */
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #9a4343; /* Couleur au survol */
+}
