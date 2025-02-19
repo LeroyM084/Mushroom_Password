@@ -1,0 +1,119 @@
+/* Corps de la page */
+body {
+    font-family: Arial, sans-serif;
+    color: #333;
+    width: 300px;
+    background-color: blanchedalmond;
+    height: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+main serviceSpan{
+    padding-left : 20px;
+}
+
+footer button{
+    margin-bottom : 10px;
+}
+
+/* Liste des services */
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.service-item {
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.service-name {
+    font-weight: bold;
+    color: #ff4742;
+    font-size: 16px;
+    flex: 1;
+}
+
+.copy-button {
+    background-color: blanchedalmond;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.copy-button:hover {
+    background-color: #a69983;
+}
+
+.copy-button img {
+    width: 30px;
+    height: 30px;
+}
+
+#result {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-right: 10px;
+}
+
+img{
+    height:20px;
+    width:20px
+}
+
+
+.service-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    gap: 30px; /* Espace significatif entre le nom et le bouton */
+    border-bottom: 1px solid black;
+}
+
+.service-name {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 15px; /* Espace supplémentaire */
+}
+
+.service-item button {
+    flex-shrink: 0; /* Empêche le bouton de rétrécir */
+}
+
+#search-input {
+    width: 100%; /* Largeur complète */
+    padding: 10px;
+    margin-bottom: 15px; /* Espace en-dessous */
+    border: 2px solid #ff4742; /* Couleur de bordure assortie à votre palette */
+    border-radius: 6px; /* Coins arrondis */
+    font-size: 16px; /* Taille de police standard */
+    background-color: white; /* Fond blanc */
+    box-sizing: border-box; /* Pour que le padding n'augmente pas la largeur */
+    outline: none; /* Supprime le contour par défaut */
+    transition: border-color 0.3s ease; /* Animation douce */
+}
+
+#search-input:focus {
+    border-color: #a63f3a; /* Changement de couleur au focus */
+    box-shadow: 0 0 5px rgba(255, 71, 66, 0.3); /* Léger effet d'ombre */
+}
+
+#search-input::placeholder {
+    color: #999; /* Couleur du texte de placeholder */
+    font-style: italic;
+}

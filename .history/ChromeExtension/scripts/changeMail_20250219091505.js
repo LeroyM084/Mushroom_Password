@@ -1,0 +1,1 @@
+const textFieldValue = document.getElementById(type)

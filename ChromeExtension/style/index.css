@@ -1,0 +1,134 @@
+html{
+    border-radius:10px;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    color: #333;
+    width: 450px;  
+    height: fit-content;
+    background-color: blanchedalmond;
+    min-height: 300px;  
+    max-height: 500px;  
+    margin: 0;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;  
+    box-sizing: border-box;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+header .logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff4742;
+    text-align: center;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;  
+}
+
+main ul {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.search-container {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+#search-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ff4742;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+#password-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.service-item {
+    display: flex;
+    justify-content: space-between; /* Espace entre le nom du service et le bouton */
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    transition: background-color 0.2s; 
+}
+
+.service-item:hover {
+    background-color: rgba(255, 71, 66, 0.05);
+}
+
+.service-name {
+    flex-grow: 1; 
+    margin-right: 10px; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    white-space: nowrap; 
+}
+
+.service-item button {
+    background-color: transparent; /* Utiliser un fond transparent */
+    border-radius: 6px; /* Arrondir les coins du bouton */
+}
+
+.service-item button img {
+    width: 20px; 
+    height: 20px; 
+}
+
+/* Centrage des boutons */
+.service-item {
+   justify-content: center; /* Centrer le contenu horizontalement */
+}
+
+.no-password-message {
+   text-align: center; 
+   color: #888; 
+   padding: 20px; 
+   background-color: rgba(255, 71, 66, 0.05); 
+   border-radius: 6px; 
+}
+
+button {
+   width: calc(100% - 30px); /* Ajuster la largeur pour laisser de l'espace */
+   display:inline-block; 
+   outline :0; 
+   cursor:pointer; 
+   border-radius :6px; 
+   border :2px solid #ff4742; 
+   color :#fff; 
+   background-color :#ff4742; 
+   padding :12px 20px; 
+   box-shadow :rgba(0,0,0,0.07) 0px 2px 4px 0px, rgba(0,0,0,0.05) 0px 1px 1.5px 0px; 
+   font-weight :700; 
+   font-size :16px; 
+   height :48px; 
+   margin-top :15px; 
+   transition :background-color .3s,color .3s; 
+}
+
+button:hover {
+   background-color :#fff; 
+   color :#ff4742; 
+}
