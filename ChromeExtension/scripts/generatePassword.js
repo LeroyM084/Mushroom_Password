@@ -1,7 +1,7 @@
 let generatedPassword = ''; // Variable globale pour stocker le mot de passe généré
 
 // Fonction asynchrone pour générer le mot de passe
-export async function generatePassword() {
+async function generatePassword() {
 const length = 25; // Longueur du mot de passe
 try {
 const response = await fetch(`http://localhost:5000/generate-password?length=${length}`);
@@ -57,9 +57,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 const resultDiv = document.getElementById('result');
 const copyButton = document.getElementById('copy');
 const saveButton = document.getElementById('save');
+
 const copyIconPath = "/ChromeExtension/assets/imgs/copy_icon.png";
 const tickIconPath = "/ChromeExtension/assets/imgs/tick_icon.png";
 
+copyButton.addEventListener('click', () => {
+    copyToClipboard(generatedPassword);
+});
 // Gestionnaire d'événement pour le bouton de sauvegarde
 saveButton.addEventListener('click', async () => {
 if (!generatedPassword) {
@@ -70,6 +74,18 @@ const result = await saveServiceAndPasswordInJSON(data);
 console.log("Résultat de la sauvegarde:", result);
 });
 });
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        console.log('Mot de passe copié dans le presse-papiers');
+        // Optionnel : changer l'apparence du bouton pour indiquer que la copie a réussi
+        copyButton.textContent = "Copié !";
+        setTimeout(() => {
+            copyButton.textContent = "Copier";
+        }, 2000);
+    }).catch(err => {
+        console.error('Erreur lors de la copie : ', err);
+    });
+}
 
 
 // Gérer l'état du bouton de sauvegarde 
