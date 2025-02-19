@@ -145,7 +145,6 @@ def api_list_passwords():
             'service_name': data['service_name'],
             'service_password': decrypt_password(data['service_password'], decryption_key)
         }
-
     return jsonify(decrypted_passwords)
 
 @app.route('/get-password', methods=['POST'])
