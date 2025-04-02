@@ -1,0 +1,7 @@
+POST https://localhost:5000/modify-password 
+Content-Type: application/json
+
+{
+  "service_URL": "https://www.www.google.com",
+  "new_password": "nouveauMotDePasse"
+}

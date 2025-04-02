@@ -96,7 +96,7 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def home():
     return jsonify({"message": "Bienvenue sur l'API Mushroom Password Manager!"})
 
@@ -143,19 +143,74 @@ def api_save_password():
 
     return jsonify({"message": f"Mot de passe enregistré pour le service '{service_name}'."})
 
+
+#Route pour modifier le mot de passe
+#Forme de la requete : 
+"""
+const response = await fetch('http://localhost:5000/modify-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                service_URL: serviceURL,
+                new_password: newPassword,
+            }),
+        });
+"""
+#En JS et pas en Rust, je sais pas faire
+@app.route('/modify-password', methods=['POST'])
+def api_modify_password():
+    data = request.json
+    print(data) # Débug
+    service_url = data.get('service_URL')
+    new_password = data.get('new_password')
+
+    if not service_url or not new_password:
+        return jsonify({"error": "service_URL and new_password are required."}), 400
+
+    ensure_json_file(PASSWORDS_FILE)
+    try:
+        with open(PASSWORDS_FILE, 'r') as file:
+            passwords = json.load(file)
+    except Exception as e:
+        return jsonify({"error": f"Failed to load passwords file: {str(e)}"}), 500
+
+    if service_url in passwords:
+        key = load_key()
+        encrypted_password = encrypt_password(new_password, key)
+        passwords[service_url]['service_password'] = encrypted_password
+
+        with open(PASSWORDS_FILE, 'w') as file:
+            json.dump(passwords, file, indent=4)
+
+        return jsonify({"message": f"Password for '{service_url}' updated successfully."})
+    else:
+        return jsonify({"error": f"Service URL '{service_url}' not found."}), 404
+
+
 @app.route('/list-passwords', methods=['GET'])
 def api_list_passwords():
     try:
         ensure_json_file(PASSWORDS_FILE)
-        key = load_key()  # Vérifier que load_key() ne lève pas d'exception
+        key = load_key()
         with open(PASSWORDS_FILE, 'r') as file:
             passwords = json.load(file)
-            
-        return jsonify(passwords)  # Retourner les données brutes pour test
+        
+        decrypted_passwords = []
+        for service_url, details in passwords.items():
+            decrypted_passwords.append({
+                "service_URL": details['service_URL'],
+                "service_name": details['service_name'],
+                "service_password": decrypt_password(details['service_password'], key),
+                "email": details.get('email')
+            })
+
+        return jsonify(decrypted_passwords)
 
     except Exception as e:
-        app.logger.error(f"ERREUR CRITIQUE: {str(e)}")  # Log dans la console
-        return jsonify({"error": "Erreur de traitement"}), 500
+        app.logger.error(f"Critical Error: {str(e)}")
+        return jsonify({"error": "An error occurred while processing the request."}), 500
 
 
 @app.route('/api/v1/passwords', methods=['GET'])
