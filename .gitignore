@@ -28,6 +28,8 @@ venv/
 *.code-workspace
 .history/
 
+.mushroom-password-manager/target/debug/
+
 # Logs
 *.log
 logs/

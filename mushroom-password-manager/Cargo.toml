@@ -25,6 +25,8 @@ env_logger = "0.10.0"
 directories = "5.0.1"
 thiserror = "1.0.40"
 
+regex = "1.9.0"
+
 [profile.release]
 opt-level = 3
 lto = true

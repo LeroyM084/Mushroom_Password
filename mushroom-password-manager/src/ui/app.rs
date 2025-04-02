@@ -1,7 +1,6 @@
 use iced::{
-    Application, Command, Element, Subscription, Theme, Settings,
+    Application, Command, Element, Length, Settings, Subscription, Theme,
     widget::{Button, Column, Container, Row, Scrollable, Text, TextInput},
-    Length,
 };
 use iced::clipboard;
 
@@ -18,10 +17,12 @@ pub enum Message {
     RefreshPasswords,
     EmailInputChanged(String),
     SaveEmail,
+    EmailReceived(String),
     PasswordSelected(String),
     PasswordGenerated(String),
     PasswordsUpdated(Vec<String>),
     StatusUpdate(String),
+    GetEmail,
 }
 
 pub struct PasswordManagerApp {
@@ -29,14 +30,16 @@ pub struct PasswordManagerApp {
     password_value: String,
     service_url_value: String,
     email_value: String,
-    
+
     // État de l'application
     api_client: ApiClient,
     passwords: Vec<String>,
     selected_password: Option<String>,
-    
+
     // Messages système
     status_message: Option<String>,
+    
+    
 }
 
 impl Application for PasswordManagerApp {
@@ -56,7 +59,9 @@ impl Application for PasswordManagerApp {
                 selected_password: None,
                 status_message: None,
             },
-            Command::none(),
+            Command::batch(vec![
+                Command::perform(async { Message::GetEmail }, |_| Message::GetEmail)
+            ]),
         )
     }
 
@@ -117,10 +122,19 @@ impl Application for PasswordManagerApp {
                 self.email_value = value;
                 Command::none()
             }
+            //Ajouter ici 
             Message::SaveEmail => {
-                self.status_message = Some(String::from("Email sauvegardé (pas encore implémenté)"));
-                Command::none()
-            }
+                    let client = self.api_client.clone();
+                    let email = self.email_value.clone();
+                    return Command::perform(
+                        async move { client.save_email(&email).await },
+                        |result| match result {
+                            Ok(_) => Message::StatusUpdate("Email sauvegardé!".into()),
+                            Err(e) => Message::StatusUpdate(format!("Erreur sauvegarde email: {}", e)),
+                        },
+                    );
+                }
+            
             Message::PasswordSelected(password) => {
                 self.selected_password = Some(password);
                 Command::none()
@@ -135,6 +149,20 @@ impl Application for PasswordManagerApp {
             }
             Message::StatusUpdate(status) => {
                 self.status_message = Some(status);
+                Command::none()
+            }
+             Message::GetEmail => {
+                let client = self.api_client.clone();
+                return Command::perform(
+                    async move { client.get_email().await },
+                    |result| match result {
+                        Ok(email) => Message::EmailReceived(email),
+                        Err(e) => Message::StatusUpdate(format!("Erreur: {}", e)),
+                    },
+                );
+            }
+            Message::EmailReceived(email) => {
+                self.email_value = email;
                 Command::none()
             }
         }
@@ -169,7 +197,7 @@ impl Application for PasswordManagerApp {
                     .push(Text::new("URL du service").size(16))
                     .push(
                         TextInput::new(
-                            "URL du service (ex: www.exemple.com)", 
+                            "URL du service (ex: www.exemple.com)",
                             &self.service_url_value
                         )
                         .on_input(Message::ServiceUrlChanged)
@@ -181,7 +209,7 @@ impl Application for PasswordManagerApp {
                     .push(Text::new("Mot de passe").size(16))
                     .push(
                         TextInput::new(
-                            "Mot de passe", 
+                            "Mot de passe",
                             &self.password_value
                         )
                         .on_input(Message::InputChanged)
@@ -230,7 +258,7 @@ impl Application for PasswordManagerApp {
             .push(Text::new("Email").size(16))
             .push(
                 TextInput::new(
-                    "Email", 
+                    "Email",
                     &self.email_value
                 )
                 .on_input(Message::EmailInputChanged)
@@ -271,6 +299,8 @@ impl Application for PasswordManagerApp {
     }
 }
 
+
+#[allow(dead_code)] // Ignorer l'avertissement pour cette fonction
 pub fn main() -> iced::Result {
     PasswordManagerApp::run(Settings::default())
 }

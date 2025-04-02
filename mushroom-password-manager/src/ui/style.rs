@@ -1,5 +1,6 @@
 use iced::{widget::{button, container}, Background, Color};
 
+#[allow(dead_code)]
 pub enum ButtonType {
     Primary,
     Secondary,

@@ -10,8 +10,8 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # Chemins vers les fichiers
-PASSWORDS_FILE = './API/passwords.json'
-EMAILFILE = './API/usermail.json'
+PASSWORDS_FILE = os.path.join(os.path.dirname(__file__), 'passwords.json')
+EMAILFILE =os.path.join(os.path.dirname(__file__), 'usermail.json')
 KEY_FILE = 'key_file.key'
 USER_MAIL = ""
 
@@ -113,6 +113,7 @@ def api_save_password():
 
     service_url = data.get('service')
     password = data.get('password')
+    email = data.get('email')
 
     if not service_url or not password:
         return jsonify({"error": "Les champs 'service' et 'password' sont requis."}), 400
@@ -133,7 +134,8 @@ def api_save_password():
     passwords[service_url] = {
         'service_URL': service_url_trimmed,  # URL avec le sous-domaine
         'service_name': service_name,  # Nom du service (sous-domaine + domaine)
-        'service_password': encrypted_password
+        'service_password': encrypted_password,
+        'email': email  # Stockage de l'email
     }
 
     with open(PASSWORDS_FILE, 'w') as file:
@@ -143,6 +145,21 @@ def api_save_password():
 
 @app.route('/list-passwords', methods=['GET'])
 def api_list_passwords():
+    try:
+        ensure_json_file(PASSWORDS_FILE)
+        key = load_key()  # Vérifier que load_key() ne lève pas d'exception
+        with open(PASSWORDS_FILE, 'r') as file:
+            passwords = json.load(file)
+            
+        return jsonify(passwords)  # Retourner les données brutes pour test
+
+    except Exception as e:
+        app.logger.error(f"ERREUR CRITIQUE: {str(e)}")  # Log dans la console
+        return jsonify({"error": "Erreur de traitement"}), 500
+
+
+@app.route('/api/v1/passwords', methods=['GET'])
+def api_list_passwords_rust():
     ensure_json_file(PASSWORDS_FILE)
     try:
         key = load_key()
