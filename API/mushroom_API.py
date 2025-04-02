@@ -60,7 +60,7 @@ def extract_domain_name(url):
     url = url.replace('http://', '').replace('https://', '').replace('www.', '')
     domain = url.split('/')[0]  # Prendre uniquement la partie avant le premier slash
 
-    # On cherche à récupérer le nom avant '.fr', '.com', etc.
+    # On cherche à récupérer le nom avant '.fr', '.com', '.net', '.org'
     for tld in ['.fr', '.com', '.net', '.org']:
         if domain.endswith(tld):
             return domain.split(tld)[0]  # Retourne la partie avant le TLD
@@ -88,6 +88,14 @@ def handle_options():
     response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
     return response
 
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
 @app.route('/')
 def home():
     return jsonify({"message": "Bienvenue sur l'API Mushroom Password Manager!"})
@@ -110,7 +118,10 @@ def api_save_password():
         return jsonify({"error": "Les champs 'service' et 'password' sont requis."}), 400
 
     ensure_json_file(PASSWORDS_FILE)
-    key = load_key()
+    try:
+        key = load_key()
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 500
 
     with open(PASSWORDS_FILE, 'r') as file:
         passwords = json.load(file)
@@ -133,19 +144,14 @@ def api_save_password():
 @app.route('/list-passwords', methods=['GET'])
 def api_list_passwords():
     ensure_json_file(PASSWORDS_FILE)
-    decryption_key = load_key()
-
-    with open(PASSWORDS_FILE, 'r') as file:
-        passwords = json.load(file)
-
-    decrypted_passwords = {}
-    for service_url, data in passwords.items():
-        decrypted_passwords[service_url] = {
-            'service_URL': data['service_URL'],
-            'service_name': data['service_name'],
-            'service_password': decrypt_password(data['service_password'], decryption_key)
-        }
-    return jsonify(decrypted_passwords)
+    try:
+        key = load_key()
+        with open(PASSWORDS_FILE, 'r') as file:
+            encrypted_data = json.load(file)
+            passwords = [f"{service}: (chiffré)" for service in encrypted_data.keys()]
+            return jsonify(passwords)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/get-password', methods=['POST'])
 def api_get_password():
@@ -156,7 +162,10 @@ def api_get_password():
         return jsonify({"error": "Le champ 'service_URL' est requis."}), 400
 
     ensure_json_file(PASSWORDS_FILE)
-    key = load_key()
+    try:
+        key = load_key()
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 500
 
     with open(PASSWORDS_FILE, 'r') as file:
         passwords = json.load(file)
@@ -173,22 +182,20 @@ def api_registered():
     data = request.json
     service_URL = data.get('service_URL')
 
-    # Vérifie si le champ service_URL est présent
     if not service_URL:
         return jsonify({"error": "Le champ 'service_URL' est requis."}), 400
 
-    # Extraction de l'URL principale
     service_URL = extract_service_url(service_URL)
 
-    # Assure que le fichier JSON existe
     ensure_json_file(PASSWORDS_FILE)
-    key = load_key()
+    try:
+        key = load_key()
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 500
 
-    # Chargement des données du fichier JSON
     with open(PASSWORDS_FILE, 'r') as file:
         passwords = json.load(file)
 
-    # Recherche de l'URL dans le fichier JSON
     for service, details in passwords.items():
         if details['service_URL'] == service_URL:
             decrypted_password = decrypt_password(details['service_password'], key)
@@ -201,21 +208,21 @@ def api_registered():
                 "password": decrypted_password
             })
 
-    # Si l'URL n'est pas trouvée
     return jsonify({
         "registered": False,
         "message": f"L'URL '{service_URL}' n'est pas enregistrée."
     })
 
-    return jsonify({"registered": False, "message": f"L'URL '{service_URL}' n'est pas encore enregistrée."})
-
-# Partie email 
 @app.route('/getEmail', methods=["GET"])
 def getEmail():
-    with open(EMAILFILE, 'r') as file: 
-        fichier = json.load(file)
-    print("Voici le mail trouvé : ", fichier.get("email"))
-    return jsonify({"email": fichier.get("email")})
+    ensure_json_file(EMAILFILE)
+    try:
+        with open(EMAILFILE, 'r') as file: 
+            fichier = json.load(file)
+        print("Voici le mail trouvé : ", fichier.get("email"))
+        return jsonify({"email": fichier.get("email")})
+    except FileNotFoundError as e:
+        return jsonify({"email": ""})
 
 
 @app.route('/changeMail', methods=["POST"])
@@ -231,9 +238,18 @@ def changeMail():
 
     return jsonify({"message": "L'email a été mis à jour avec succès."})
 
+# --- Gestion des erreurs globales ---
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Gestionnaire d'erreurs global pour toutes les exceptions non gérées."""
+    app.logger.error(f"Exception non gérée : {e}")
+    return jsonify({"error": "Une erreur interne est survenue."}), 500
 
 # Lancement du serveur
 if __name__ == '__main__':
+    # Créer les fichiers de données s'ils n'existent pas
     if not os.path.exists(KEY_FILE):
         gen_key()
+    ensure_json_file(PASSWORDS_FILE)
+    ensure_json_file(EMAILFILE)
     app.run(debug=True)
