@@ -9,6 +9,7 @@ use crate::api::client::ApiClient;
 // Définition des différentes vues de l'application
 #[derive(Debug, Clone, PartialEq)]
 pub enum View {
+    Login,     // Nouvelle vue pour la connexion
     Main,
     ServiceDetail,
 }
@@ -16,6 +17,7 @@ pub enum View {
 // Messages d'application
 #[derive(Debug, Clone)]
 pub enum Message {
+    // Messages existants
     InputChanged(String),
     ServiceUrlChanged(String),
     GeneratePassword,
@@ -30,42 +32,36 @@ pub enum Message {
     PasswordsUpdated(Vec<String>),
     StatusUpdate(String),
     GetEmail,
-    
-    // Nouveaux messages
     ServiceSelected(String),
-    PasswordDetailsReceived(String, String, String), // URL, password, email
+    PasswordDetailsReceived(String, String, String),
     ToggleEditMode,
     UpdatePassword,
     ClearForm,
-    
-    // Ajoutez cette ligne ici
     ClearFormFields,
-    
-    // Nouveaux messages pour la navigation
     NavigateTo(View),
     BackToMain,
+    
+    // Nouveaux messages pour la page de connexion
+    MasterPasswordInputChanged(String),
+    LoginAttempt,
 }
 
 pub struct PasswordManagerApp {
-    // Vue actuelle
+    // État existant
     current_view: View,
-    
-    // Valeurs des champs
     password_value: String,
     service_url_value: String,
     email_value: String,
-
-    // État de l'application
     api_client: ApiClient,
     passwords: Vec<String>,
     selected_password: Option<String>,
-    
-    // Nouveaux états
     editing_mode: bool,
     current_service_url: Option<String>,
-
-    // Messages système
     status_message: Option<String>,
+    
+    // Nouvel état pour le mot de passe maître
+    master_password: String,
+    is_authenticated: bool,
 }
 
 impl Application for PasswordManagerApp {
@@ -77,7 +73,7 @@ impl Application for PasswordManagerApp {
     fn new(_flags: ()) -> (Self, Command<Message>) {
         (
             Self {
-                current_view: View::Main,
+                current_view: View::Login,  // Commencer par la vue de connexion
                 password_value: String::new(),
                 service_url_value: String::new(),
                 email_value: String::new(),
@@ -87,11 +83,10 @@ impl Application for PasswordManagerApp {
                 editing_mode: false,
                 current_service_url: None,
                 status_message: None,
+                master_password: String::new(),
+                is_authenticated: false,
             },
-            Command::batch(vec![
-                Command::perform(async { Message::GetEmail }, |_| Message::GetEmail),
-                Command::perform(async { Message::RefreshPasswords }, |msg| msg),
-            ]),
+            Command::none(),
         )
     }
 
@@ -101,230 +96,232 @@ impl Application for PasswordManagerApp {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::InputChanged(value) => {
-                self.password_value = value;
+            // Gestion des messages de connexion
+            Message::MasterPasswordInputChanged(value) => {
+                self.master_password = value;
                 Command::none()
             }
-            Message::ServiceUrlChanged(value) => {
-                self.service_url_value = value;
-                Command::none()
-            }
-            Message::GeneratePassword => {
-                let client = self.api_client.clone();
-                return Command::perform(
-                    async move { client.generate_password().await },
-                    |result| match result {
-                        Ok(password) => Message::PasswordGenerated(password),
-                        Err(e) => Message::StatusUpdate(format!("Erreur génération: {}", e)),
-                    },
-                );
-            }
-            Message::CopyToClipboard => {
-                let command = clipboard::write::<Message>(self.password_value.clone());
-                self.status_message = Some(String::from("Mot de passe copié dans le presse-papiers"));
-                return command;
-            }
-            Message::SavePassword => {
-                let client = self.api_client.clone();
-                let service_url = self.service_url_value.clone();
-                let password = self.password_value.clone();
-                let email = self.email_value.clone();
-
-                return Command::perform(
-                    async move { client.save_password(&service_url, &password, &email).await },
-                    |result| match result {
-                        Ok(_) => {
-                            Command::perform(
-                                async { Message::RefreshPasswords }, 
-                                |msg| msg
-                            );
-                            Message::StatusUpdate("Sauvegarde réussie".into())
-                        },
-                        Err(e) => Message::StatusUpdate(format!("Erreur: {}", e)),
-                    },
-                );
-            }
-            Message::RefreshPasswords => {
-                let client = self.api_client.clone();
-                return Command::perform(
-                    async move { client.get_saved_passwords().await },
-                    |result| match result {
-                        Ok(passwords) => Message::PasswordsUpdated(passwords),
-                        Err(e) => Message::StatusUpdate(format!("Erreur: {}", e)),
-                    },
-                );
-            }
-            Message::EmailInputChanged(value) => {
-                self.email_value = value;
-                Command::none()
-            }
-            Message::SaveEmail => {
-                let client = self.api_client.clone();
-                let email = self.email_value.clone();
-                return Command::perform(
-                    async move { client.save_email(&email).await },
-                    |result| match result {
-                        Ok(_) => Message::StatusUpdate("Email sauvegardé!".into()),
-                        Err(e) => Message::StatusUpdate(format!("Erreur sauvegarde email: {}", e)),
-                    },
-                );
-            }
-            Message::PasswordSelected(password) => {
-                self.selected_password = Some(password);
-                Command::none()
-            }
-            Message::PasswordGenerated(password) => {
-                self.password_value = password;
-                Command::none()
-            }
-            Message::PasswordsUpdated(passwords) => {
-                self.passwords = passwords;
-                Command::none()
-            }
-            Message::StatusUpdate(status) => {
-                self.status_message = Some(status);
-                Command::none()
-            }
-            Message::GetEmail => {
-                let client = self.api_client.clone();
-                return Command::perform(
-                    async move { client.get_email().await },
-                    |result| match result {
-                        Ok(email) => Message::EmailReceived(email),
-                        Err(e) => Message::StatusUpdate(format!("Erreur: {}", e)),
-                    },
-                );
-            }
-            Message::EmailReceived(email) => {
-                self.email_value = email;
-                Command::none()
-            }
-            
-            // Nouveaux handlers de messages
-            Message::ServiceSelected(service_name) => {
-                // On définit le service sélectionné
-                self.selected_password = Some(service_name.clone());
-                let service_name_clone = service_name.clone();
-                let client = self.api_client.clone();
-                
-                // On récupère d'abord les détails du mot de passe
-                let cmd = Command::perform(
-                    async move { client.get_password_details(&service_name_clone).await },
-                    move |result| match result {
-                        Ok((service_url, password, email)) => {
-                            Message::PasswordDetailsReceived(service_url, password, email)
-                        },
-                        Err(e) => {
-                            Message::StatusUpdate(format!("Erreur: Service '{}' non trouvé. {}", service_name, e))
-                        },
-                    },
-                );
-                
-                // On navigue vers la vue détaillée
-                self.current_view = View::ServiceDetail;
-                cmd
-            }
-            
-            Message::PasswordDetailsReceived(service_url, password, email) => {
-                self.service_url_value = service_url.clone();
-                self.password_value = password;
-                self.email_value = email;
-                self.current_service_url = Some(service_url);
-                self.editing_mode = true;
-                self.status_message = Some(format!("Informations du service chargées"));
-                Command::none()
-            }
-            
-            Message::ToggleEditMode => {
-                self.editing_mode = !self.editing_mode;
-                Command::none()
-            }
-            
-            Message::UpdatePassword => {
-                if let Some(service_url) = &self.current_service_url {
-                    let client = self.api_client.clone();
-                    let service_url = service_url.clone();
-                    let password = self.password_value.clone();
-                    let email = self.email_value.clone();
+            Message::LoginAttempt => {
+                // Pour simplifier, utilisez un mot de passe fixe
+                // En production, utilisez plutôt un hash stocké de façon sécurisée
+                if self.master_password == "mushroom123" {  // Exemple de mot de passe
+                    self.is_authenticated = true;
+                    self.current_view = View::Main;
+                    self.status_message = Some(String::from("Connexion réussie"));
                     
-                    self.status_message = Some(format!("Mise à jour en cours..."));
-                    
-                    return Command::perform(
-                        async move { 
-                            println!("Mise à jour du service: {}, email: {}", service_url, email);
-                            client.update_password(&service_url, &password, &email).await 
-                        },
-                        |result| match result {
-                            Ok(_) => Message::StatusUpdate("Mot de passe mis à jour avec succès".into()),
-                            Err(e) => Message::StatusUpdate(format!("Erreur de mise à jour: {}", e)),
-                        },
-                    );
+                    // Charger les données après connexion
+                    return Command::batch(vec![
+                        Command::perform(async { Message::GetEmail }, |_| Message::GetEmail),
+                        Command::perform(async { Message::RefreshPasswords }, |msg| msg),
+                    ]);
                 } else {
-                    self.status_message = Some(String::from("Erreur: URL du service non disponible"));
+                    self.status_message = Some(String::from("Mot de passe incorrect"));
                 }
                 Command::none()
             }
             
-            Message::ClearForm => {
-                self.password_value = String::new();
-                self.service_url_value = String::new();
-                self.current_service_url = None;
-                self.editing_mode = false;
-                self.selected_password = None;
-                Command::none()
-            }
-            
-            // Navigation
-            Message::NavigateTo(view) => {
-                self.current_view = view;
-                Command::none()
-            }
-            
-            Message::BackToMain => {
-                // Réinitialiser l'état et retourner à la vue principale
-                self.current_view = View::Main;
-                self.selected_password = None;
-                self.editing_mode = false;
-                self.current_service_url = None;
+            // Messages existants - ils ne doivent s'exécuter que si l'utilisateur est authentifié
+            _ => {
+                if !self.is_authenticated && self.current_view == View::Login {
+                    // Si on n'est pas connecté et qu'on est sur la page de login,
+                    // bloquer tous les autres messages
+                    return Command::none();
+                }
                 
-                // Vider les champs du formulaire
-                self.password_value = String::new();
-                self.service_url_value = String::new();
-                self.email_value = String::new();
-                
-                // Rafraîchir la liste des mots de passe
-                return Command::perform(
-                    async { Message::RefreshPasswords },
-                    |msg| msg
-                );
+                // Sinon, traiter normalement les messages comme avant
+                match message {
+                    Message::InputChanged(value) => {
+                        self.password_value = value;
+                        Command::none()
+                    }
+                    Message::ServiceUrlChanged(value) => {
+                        self.service_url_value = value;
+                        Command::none()
+                    }
+                    Message::GeneratePassword => {
+                        let client = self.api_client.clone();
+                        return Command::perform(
+                            async move { client.generate_password().await },
+                            |result| match result {
+                                Ok(password) => Message::PasswordGenerated(password),
+                                Err(e) => Message::StatusUpdate(format!("Erreur génération: {}", e)),
+                            },
+                        );
+                    }
+                    Message::CopyToClipboard => {
+                        let command = clipboard::write::<Message>(self.password_value.clone());
+                        self.status_message = Some(String::from("Mot de passe copié dans le presse-papiers"));
+                        return command;
+                    }
+                    Message::SavePassword => {
+                        let client = self.api_client.clone();
+                        let service_url = self.service_url_value.clone();
+                        let password = self.password_value.clone();
+                        let email = self.email_value.clone();
+
+                        return Command::perform(
+                            async move { client.save_password(&service_url, &password, &email).await },
+                            |result| match result {
+                                Ok(_) => {
+                                    Command::perform(
+                                        async { Message::RefreshPasswords }, 
+                                        |msg| msg
+                                    );
+                                    Message::StatusUpdate("Sauvegarde réussie".into())
+                                },
+                                Err(e) => Message::StatusUpdate(format!("Erreur: {}", e)),
+                            },
+                        );
+                    }
+                    Message::RefreshPasswords => {
+                        let client = self.api_client.clone();
+                        return Command::perform(
+                            async move { client.get_saved_passwords().await },
+                            |result| match result {
+                                Ok(passwords) => Message::PasswordsUpdated(passwords),
+                                Err(e) => Message::StatusUpdate(format!("Erreur: {}", e)),
+                            },
+                        );
+                    }
+                    Message::EmailInputChanged(value) => {
+                        self.email_value = value;
+                        Command::none()
+                    }
+                    Message::SaveEmail => {
+                        let client = self.api_client.clone();
+                        let email = self.email_value.clone();
+                        return Command::perform(
+                            async move { client.save_email(&email).await },
+                            |result| match result {
+                                Ok(_) => Message::StatusUpdate("Email sauvegardé!".into()),
+                                Err(e) => Message::StatusUpdate(format!("Erreur sauvegarde email: {}", e)),
+                            },
+                        );
+                    }
+                    Message::PasswordSelected(password) => {
+                        self.selected_password = Some(password);
+                        Command::none()
+                    }
+                    Message::PasswordGenerated(password) => {
+                        self.password_value = password;
+                        Command::none()
+                    }
+                    Message::PasswordsUpdated(passwords) => {
+                        self.passwords = passwords;
+                        Command::none()
+                    }
+                    Message::StatusUpdate(status) => {
+                        self.status_message = Some(status);
+                        Command::none()
+                    }
+                    Message::GetEmail => {
+                        let client = self.api_client.clone();
+                        return Command::perform(
+                            async move { client.get_email().await },
+                            |result| match result {
+                                Ok(email) => Message::EmailReceived(email),
+                                Err(e) => Message::StatusUpdate(format!("Erreur: {}", e)),
+                            },
+                        );
+                    }
+                    Message::EmailReceived(email) => {
+                        self.email_value = email;
+                        Command::none()
+                    }
+                    Message::ServiceSelected(service_name) => {
+                        self.selected_password = Some(service_name.clone());
+                        let service_name_clone = service_name.clone();
+                        let client = self.api_client.clone();
+                        
+                        let cmd = Command::perform(
+                            async move { client.get_password_details(&service_name_clone).await },
+                            move |result| match result {
+                                Ok((service_url, password, email)) => {
+                                    Message::PasswordDetailsReceived(service_url, password, email)
+                                },
+                                Err(e) => {
+                                    Message::StatusUpdate(format!("Erreur: Service '{}' non trouvé. {}", service_name, e))
+                                },
+                            },
+                        );
+                        
+                        self.current_view = View::ServiceDetail;
+                        cmd
+                    }
+                    Message::PasswordDetailsReceived(service_url, password, email) => {
+                        self.service_url_value = service_url.clone();
+                        self.password_value = password;
+                        self.email_value = email;
+                        self.current_service_url = Some(service_url);
+                        self.editing_mode = true;
+                        self.status_message = Some(format!("Informations du service chargées"));
+                        Command::none()
+                    }
+                    Message::ToggleEditMode => {
+                        self.editing_mode = !self.editing_mode;
+                        Command::none()
+                    }
+                    Message::UpdatePassword => {
+                        if let Some(service_url) = &self.current_service_url {
+                            let client = self.api_client.clone();
+                            let service_url = service_url.clone();
+                            let password = self.password_value.clone();
+                            let email = self.email_value.clone();
+                            
+                            self.status_message = Some(format!("Mise à jour en cours..."));
+                            
+                            return Command::perform(
+                                async move { 
+                                    println!("Mise à jour du service: {}, email: {}", service_url, email);
+                                    client.update_password(&service_url, &password, &email).await 
+                                },
+                                |result| match result {
+                                    Ok(_) => Message::StatusUpdate("Mot de passe mis à jour avec succès".into()),
+                                    Err(e) => Message::StatusUpdate(format!("Erreur de mise à jour: {}", e)),
+                                },
+                            );
+                        } else {
+                            self.status_message = Some(String::from("Erreur: URL du service non disponible"));
+                        }
+                        Command::none()
+                    }
+                    Message::ClearForm | Message::ClearFormFields => {
+                        self.password_value = String::new();
+                        self.service_url_value = String::new();
+                        self.current_service_url = None;
+                        self.editing_mode = false;
+                        self.selected_password = None;
+                        Command::none()
+                    }
+                    Message::NavigateTo(view) => {
+                        self.current_view = view;
+                        Command::none()
+                    }
+                    Message::BackToMain => {
+                        self.current_view = View::Main;
+                        self.selected_password = None;
+                        self.editing_mode = false;
+                        self.current_service_url = None;
+                        
+                        self.password_value = String::new();
+                        self.service_url_value = String::new();
+                        self.email_value = String::new();
+                        
+                        return Command::perform(
+                            async { Message::RefreshPasswords },
+                            |msg| msg
+                        );
+                    }
+                    // Éviter les cas impossibles comme LoginAttempt qui est déjà traité
+                    _ => Command::none(),
+                }
             }
-            Message::ClearForm => {
-                self.password_value = String::new();
-                self.service_url_value = String::new();
-                self.current_service_url = None;
-                self.editing_mode = false;
-                self.selected_password = None;
-                Command::none()
-            },
-            
-            // Ajoutez ce gestionnaire ici
-            Message::ClearFormFields => {
-                self.password_value = String::new();
-                self.service_url_value = String::new();
-                self.email_value = String::new();
-                Command::none()
-            },
-            
-            // Navigation
-            Message::NavigateTo(view) => {
-                self.current_view = view;
-                Command::none()
-            },
         }
     }
 
     fn view(&self) -> Element<Message> {
         match self.current_view {
+            View::Login => self.view_login(),
             View::Main => self.view_main(),
             View::ServiceDetail => self.view_service_detail(),
         }
@@ -336,7 +333,56 @@ impl Application for PasswordManagerApp {
 }
 
 impl PasswordManagerApp {
-    // Vue principale avec la liste des services et le formulaire d'ajout
+    // Nouvelle méthode pour afficher la page de connexion
+    fn view_login(&self) -> Element<Message> {
+        let title = Text::new("Gestionnaire de mots de passe Mushroom")
+            .size(30);
+
+        let subtitle = Text::new("Veuillez entrer votre mot de passe maître pour accéder à vos mots de passe")
+            .size(16);
+
+        let password_input = TextInput::new(
+            "Mot de passe maître",
+            &self.master_password,
+        )
+        .on_input(Message::MasterPasswordInputChanged)
+        .padding(10)
+        .width(Length::Fill)
+        .password(); // Masque les caractères saisis
+
+        let login_button = Button::new(
+            Text::new("Se connecter")
+        )
+        .on_press(Message::LoginAttempt)
+        .padding(10)
+        .width(Length::Fill);
+
+        // Message d'état (erreur de connexion, etc.)
+        let status_message = if let Some(message) = &self.status_message {
+            Text::new(message).size(16)
+        } else {
+            Text::new("").size(16)
+        };
+
+        let content = Column::new()
+            .spacing(20)
+            .max_width(400)
+            .padding(20)
+            .push(title)
+            .push(subtitle)
+            .push(password_input)
+            .push(login_button)
+            .push(status_message);
+
+        Container::new(content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x()
+            .center_y()
+            .into()
+    }
+
+    // Méthodes existantes pour les autres vues
     fn view_main(&self) -> Element<Message> {
         // Liste des mots de passe sauvegardés
         let mut passwords_list = Column::new().spacing(10);
@@ -483,7 +529,7 @@ impl PasswordManagerApp {
             .into()
     }
     
-    // Vue détaillée d'un service avec ses informations
+    // Vue détaillée d'un service avec ses informations (identique à l'original)
     fn view_service_detail(&self) -> Element<Message> {
         let service_name = self.selected_password.clone().unwrap_or_default();
         
@@ -504,7 +550,7 @@ impl PasswordManagerApp {
             Text::new("").size(16)
         };
         
-        // Formulaire d'informations détaillées - on supprime le champ URL du service
+        // Formulaire d'informations détaillées
         let detail_form = Column::new()
             .spacing(20)
             .push(
