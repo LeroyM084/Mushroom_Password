@@ -161,6 +161,11 @@ def api_list_passwords():
         key = load_key()  # Vérifier que load_key() ne lève pas d'exception
         with open(PASSWORDS_FILE, 'r') as file:
             passwords = json.load(file)
+
+        for saved in passwords:
+            encrypted_password = passwords[saved]['service_password']
+            decrypted_password = decrypt_password(encrypted_password, key)
+            passwords[saved]['service_password'] = decrypted_password
             
         return jsonify(passwords)  # Retourner les données brutes pour test
 
